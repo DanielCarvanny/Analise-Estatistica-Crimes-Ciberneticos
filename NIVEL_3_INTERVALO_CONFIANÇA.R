@@ -137,10 +137,10 @@ for(reg in names(resultados_regioes)) {
 
 print(tabela_regioes)
 
-# Gráfico comparativo dos ICs por região
-grafico_ic_regioes <- ggplot(tabela_regioes, aes(x = Regiao, y = Media, color = Regiao)) +
-  geom_point(size = 4) +
-  geom_errorbar(aes(ymin = IC_Inferior, ymax = IC_Superior), width = 0.2, size = 1) +
+## Gráfico comparativo dos ICs por região (HISTOGRAMA)
+grafico_ic_regioes <- ggplot(tabela_regioes, aes(x = Regiao, y = Media, fill = Regiao)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_errorbar(aes(ymin = IC_Inferior, ymax = IC_Superior), width = 0.2, size = 0.8) +
   labs(
     title = "Intervalo de Confiança (95%) por Região - 2024",
     subtitle = "Comparação da média de MBAS por operação entre regiões brasileiras",
@@ -255,7 +255,7 @@ grafico_evolucao <- ggplot(tabela_anos, aes(x = Ano, y = Media)) +
     title = "Evolução da Média de MBAS com Intervalo de Confiança (95%)",
     subtitle = "Amostra: Sudeste (SP, RJ, MG, ES) | 2023-2025",
     x = "Ano",
-    y = "MBAS por Operação"
+    y = "Mandatos por Operação"
   ) +
   theme_minimal() +
   scale_x_continuous(breaks = anos)
@@ -350,34 +350,19 @@ if (!require(patchwork)) {
   library(patchwork)
 }
 
-# Gráfico 1: IC por região
-grafico_regioes <- ggplot(tabela_regioes, aes(x = reorder(Regiao, Media), y = Media, color = Regiao)) +
-  geom_point(size = 4) +
-  geom_errorbar(aes(ymin = IC_Inferior, ymax = IC_Superior), width = 0.2, size = 1) +
-  coord_flip() +
-  labs(title = "IC (95%) por Região", x = "", y = "MBAS") +
-  theme_minimal() +
-  theme(legend.position = "none")
-
 # Gráfico 2: Evolução temporal
 grafico_temporal <- ggplot(tabela_anos, aes(x = Ano, y = Media)) +
   geom_line(color = "steelblue", size = 1) +
   geom_point(size = 3, color = "darkred") +
   geom_errorbar(aes(ymin = IC_Inferior, ymax = IC_Superior), width = 0.3, size = 0.8) +
-  labs(title = "Evolução Temporal (IC 95%)", x = "Ano", y = "MBAS") +
+  labs(title = "Evolução Temporal (IC 95%)", x = "Ano", y = "Mandatos") +
   theme_minimal()
 
-# Gráfico 3: Boxplot da amostra (Sudeste 2024)
-grafico_box <- ggplot(dados_ic_sudeste, aes(x = "Sudeste 2024", y = MBAS_TOTAL)) +
-  geom_boxplot(fill = "lightblue", alpha = 0.7) +
-  stat_summary(fun = mean, geom = "point", shape = 18, size = 4, color = "darkred") +
-  labs(title = "Distribuição da Amostra", x = "", y = "MBAS") +
-  theme_minimal()
 
 # Dashboard
-dashboard_2x2 <- (grafico_regioes + grafico_temporal) / (grafico_box + grafico_normal) +
+dashboard_2x2 <- (grafico_ic_regioes + grafico_temporal) / (grafico_normal) +
   plot_annotation(
-    title = "Análise do Intervalo de Confiança (95%) - MBAS por Operação",
+    title = "Análise do Intervalo de Confiança (95%) - Mandatos por Operação",
     subtitle = paste0("Amostra: Sudeste (SP, RJ, MG, ES) - 2024 | n = ", n_sudeste, 
                       " | Média = ", round(media_sudeste, 2),
                       " | IC = [", round(IC_inferior_sudeste, 2), "; ", round(IC_superior_sudeste, 2), "]"),
@@ -449,6 +434,10 @@ z_critico <- qnorm(0.975)  # ~1.96
 # 6. Criar gráfico
 grafico_z_teste <- ggplot(curva_normal_padrao, aes(x = Z, y = Densidade)) +
   geom_line(color = "darkblue", size = 1) +
+  geom_area(data = subset(curva_normal_padrao, Z >= z_critico), 
+            aes(y = Densidade), fill = "orange", alpha = 0.3) +
+  geom_area(data = subset(curva_normal_padrao, Z <= -z_critico), 
+            aes(y = Densidade), fill = "orange", alpha = 0.3) +
   geom_area(data = subset(curva_normal_padrao, Z >= abs(t_calculado)), 
             aes(y = Densidade), fill = "red", alpha = 0.5) +
   geom_area(data = subset(curva_normal_padrao, Z <= -abs(t_calculado)), 
@@ -460,21 +449,28 @@ grafico_z_teste <- ggplot(curva_normal_padrao, aes(x = Z, y = Densidade)) +
   geom_vline(xintercept = 0, color = "darkgray", linetype = "solid", size = 0.5) +
   annotate("text", x = t_calculado + 0.3, y = 0.05, 
            label = paste0("t = ", round(t_calculado, 4)), color = "red", size = 3.5) +
+  annotate("text", x = -t_calculado - 0.3, y = 0.05, 
+           label = paste0("t = ", round(-t_calculado, 4)), color = "red", size = 3.5) +
   annotate("text", x = z_critico + 0.3, y = 0.25, 
            label = paste0("Z crítico = ±", round(z_critico, 3)), color = "orange", size = 3.5) +
   annotate("text", x = 0, y = 0.35, 
            label = paste0("p-valor = ", round(teste_t_mbas$p.value, 6)), 
            color = ifelse(teste_t_mbas$p.value < 0.05, "red", "darkgreen"), size = 4, fontface = "bold") +
   annotate("text", x = 0, y = 0.3, 
-           label = ifelse(teste_t_mbas$p.value < 0.05, "Decisão: REJEITAR H₀", "Decisão: NÃO REJEITAR H₀"), 
+           label = ifelse(teste_t_mbas$p.value < 0.05, 
+                          "Decisão: REJEITAR H₀", 
+                          "Decisão: NÃO REJEITAR H₀"), 
            color = ifelse(teste_t_mbas$p.value < 0.05, "red", "darkgreen"), size = 4, fontface = "bold") +
   labs(
     title = "Teste de Hipóteses: Média do Sudeste vs Média Nacional",
-    subtitle = "H₁: μ_sudeste ≠ μ_nacional | Área vermelha = p-valor (bilateral)",
+    subtitle = "H₁: μ_sudeste ≠ μ_nacional | Área laranja = região crítica | Área vermelha = p-valor",
     x = "Estatística t (escala Z)",
     y = "Densidade"
   ) +
   theme_minimal()
-
 # Exibir
-print(grafico_z_prop)
+print(grafico_z_teste)
+
+ggsave("teste_hipotese_igualdade.png", grafico_z_teste, width = 10, height = 6, dpi = 300)
+
+ggsave("dashboard.png", dashboard_2x2, width = 10, height = 6, dpi = 300)

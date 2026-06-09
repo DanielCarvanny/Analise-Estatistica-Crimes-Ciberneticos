@@ -43,17 +43,17 @@ ggplotly(grafico_prob, tooltip = c("x", "y"))
 
 # ============================================
 # TESTE DE HIPÓTESES: Proporção de Sucesso vs Meta
-# H₀: p <= 0.02 (meta de 2%)
-# H₁: p > 0.02
+# H₀: p <= 0.10 (meta de 10%)
+# H₁: p > 0.10
 # ============================================
 
-# Meta institucional (exemplo)
-meta <- 0.02  # 2%
+# Meta institucional (alterada para 10%)
+meta <- 0.10  # 10% (antes era 0.02)
 
 # Teste de proporção para 2025
 teste_prop_2025 <- prop.test(x = sucessos_2025, n = n_2025, p = meta, alternative = "greater")
 
-cat("=== TESTE DE HIPÓTESES: Proporção de Sucesso vs Meta (2%) ===\n\n")
+cat("=== TESTE DE HIPÓTESES: Proporção de Sucesso vs Meta (10%) ===\n\n")
 cat("Meta institucional:", meta * 100, "%\n")
 cat("Proporção observada em 2025:", round(p_2025 * 100, 4), "%\n\n")
 
@@ -62,16 +62,16 @@ cat("  Estatística X²:", round(teste_prop_2025$statistic, 4), "\n")
 cat("  p-valor:", round(teste_prop_2025$p.value, 6), "\n\n")
 
 if(teste_prop_2025$p.value < 0.05) {
-  cat("✅ A proporção de sucesso em 2025 é SIGNIFICATIVAMENTE MAIOR que a meta de 2%.\n")
+  cat("✅ A proporção de sucesso em 2025 é SIGNIFICATIVAMENTE MAIOR que a meta de 10%.\n")
   cat("   A meta foi atingida e superada com significância estatística!\n")
 } else {
-  cat("❌ Não há evidências de que a proporção de sucesso seja maior que a meta de 2%.\n")
+  cat("❌ Não há evidências de que a proporção de sucesso seja maior que a meta de 10%.\n")
   cat("   A diferença observada pode ser devida ao acaso.\n")
 }
 
 # ============================================
 # GRÁFICO DE DISTRIBUIÇÃO NORMAL PARA TESTE DE PROPORÇÃO
-# Proporção de Sucesso (2025) vs Meta (2%)
+# Proporção de Sucesso (2025) vs Meta (10%)
 # ============================================
 
 # 1. Calcular a estatística Z a partir do qui-quadrado
@@ -107,8 +107,8 @@ grafico_z_prop <- ggplot(curva_normal, aes(x = Z, y = Densidade)) +
                           "Decisão: NÃO REJEITAR H₀"), 
            color = ifelse(teste_prop_2025$p.value < 0.05, "red", "darkgreen"), size = 4, fontface = "bold") +
   labs(
-    title = "Teste de Hipóteses: Proporção de Sucesso em 2025 vs Meta de 2%",
-    subtitle = "H₁: p > 2% | Área laranja = região crítica | Área vermelha = p-valor",
+    title = "Teste de Hipóteses: Proporção de Sucesso em 2025 vs Meta de 10%",
+    subtitle = "H₁: p > 10% | Área laranja = região crítica | Área vermelha = p-valor",
     x = "Estatística Z",
     y = "Densidade"
   ) +
@@ -116,3 +116,10 @@ grafico_z_prop <- ggplot(curva_normal, aes(x = Z, y = Densidade)) +
 
 # Exibir gráfico
 print(grafico_z_prop)
+
+# Salvar (opcional)
+ggsave("teste_hipotese_normal_proporcao_10pct.png", grafico_z_prop, width = 10, height = 6, dpi = 300)
+
+ggsave("teste_hipotese_normal_proporcao.png", grafico_z_prop, width = 10, height = 6, dpi = 300)
+
+ggsave("histograma_probabilidade_prisao.png", grafico_prob, width = 10, height = 6, dpi = 300)

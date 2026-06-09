@@ -531,3 +531,5 @@ dashboard_hipotese <- (grafico_brasil + grafico_regioes_res) / grafico_z_res +
   )
 
 print(dashboard_hipotese)
+
+ggsave("dashboard_hipotese.png", dashboard_hipotese, width = 10, height = 6, dpi = 300)
